@@ -6,21 +6,17 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: true
+  contents: write
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
       - name: Download Web.zip from latest release
         run: |
           REPO="${{ github.repository }}"
@@ -32,20 +28,18 @@ jobs:
             -H "Accept: application/octet-stream" \
             "$ASSET_URL"
 
-      - name: Extract and flatten Web.zip
+      - name: Extract Web.zip
         run: |
-          unzip Web.zip -d extracted
-          mkdir -p site
-          find extracted -type f | xargs -I{} mv {} site/
+          unzip Web.zip -d site
+          find site -mindepth 2 -type f -exec mv -t site {} +
+          find site -type d -empty -delete
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          cp -r site/* .
+          rm -rf site Web.zip
+          git add -A
+          git commit -m "Deploy web build"
+          git push
