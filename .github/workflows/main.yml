@@ -32,11 +32,11 @@ jobs:
             -H "Accept: application/octet-stream" \
             "$ASSET_URL"
 
-      - name: Extract and flatten Web.zip
+      - name: Extract Web.zip
         run: |
-          unzip Web.zip -d extracted
-          mkdir -p site
-          find extracted -type f | xargs -I{} mv {} site/
+          unzip Web.zip -d site
+          find site -mindepth 2 -type f -exec mv -t site {} +
+          find site -type d -empty -delete
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
