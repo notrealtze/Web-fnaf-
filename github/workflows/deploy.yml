@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pagesyes
+name: Deploy to GitHub Pages
 
 on:
   release:
@@ -32,8 +32,11 @@ jobs:
             -H "Accept: application/octet-stream" \
             "$ASSET_URL"
 
-      - name: Extract Web.zip
-        run: unzip Web.zip -d site
+      - name: Extract and flatten Web.zip
+        run: |
+          unzip Web.zip -d extracted
+          mkdir -p site
+          find extracted -type f | xargs -I{} mv {} site/
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
